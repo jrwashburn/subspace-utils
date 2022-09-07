@@ -87,12 +87,11 @@ read -n1 -r -p "Do you want to setup UFW firewall to only allow subspace and ssh
 echo
 if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
     sudo apt -y install ufw
-    #sudo ufw default deny incoming
-    #sudo ufw default allow outgoing
+    sudo ufw default deny incoming
+    sudo ufw default allow outgoing
     sudo ufw allow $SSHPORT/tcp
     sudo ufw allow $SUBSPACEPORT/tcp
-    #sudo ufw disable
-    #sudo ufw enable
+    sudo ufw enable
 fi
 
 #Install Prometheus
@@ -124,7 +123,6 @@ if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
     read -r -p "How often do you want to scrape metrics? (e.g. 5s, 10s, 15s, 60s): " YOUR_GRAFANA_SCRAPE_INTERVAL
     echo
     echo
-    #check platforms to determine which version to install
     case $(arch) in
         i386)
             PLATFORM=linux-386
@@ -141,41 +139,45 @@ if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
             ;;
     esac
 
+    sudo mkdir -p /opt/prometheus
     CURRENT_NODE_EXPORTER=$(curl -s https://api.github.com/repos/prometheus/node_exporter/releases/latest | grep browser_download_url | grep $PLATFORM | cut -d '"' -f 4)
-    wget -N $(echo $CURRENT_NODE_EXPORTER)
-    tar xvfz $(echo $CURRENT_NODE_EXPORTER | cut -d '/' -f 9)
-    rm $(echo $CURRENT_NODE_EXPORTER | cut -d '/' -f 9)
+    sudo wget -N $CURRENT_NODE_EXPORTER -P /opt/prometheus
+    sudo tar xvfz /opt/prometheus/${CURRENT_NODE_EXPORTER##*/} -C /opt/prometheus
+    sudo rm /opt/prometheus/${CURRENT_NODE_EXPORTER##*/}
+    NODE_DIR=$(echo /opt/prometheus/${CURRENT_NODE_EXPORTER##*/} | sed 's/\.tar\.gz//g' )
 
     CURRENT_PROMETHEUS=$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | grep browser_download_url | grep $PLATFORM | cut -d '"' -f 4)
-    wget -N $(echo $CURRENT_PROMETHEUS)
-    tar xvfz $(echo $CURRENT_PROMETHEUS | cut -d '/' -f 9)
-    rm $(echo $CURRENT_PROMETHEUS | cut -d '/' -f 9)
+    sudo wget -N $CURRENT_PROMETHEUS -P /opt/prometheus
+    sudo tar xvfz /opt/prometheus/${CURRENT_PROMETHEUS##*/} -C /opt/prometheus
+    sudo rm /opt/prometheus/${CURRENT_PROMETHEUS##*/}
+    PROM_DIR=$(echo /opt/prometheus/${CURRENT_PROMETHEUS##*/} | sed 's/\.tar\.gz//g' )
 
+    sudo ln -s -f $NODE_DIR/node_exporter /usr/local/bin/node_exporter
+    sudo ln -s -f $PROM_DIR/prometheus /usr/local/bin/prometheus
     sudo mkdir -p /etc/prometheus
-    sudo cp $(echo $CURRENT_NODE_EXPORTER | cut -d '/' -f 9 | sed 's^.tar.gz^^')/node_exporter /usr/local/bin
-    sudo cp $(echo $CURRENT_PROMETHEUS | cut -d '/' -f 9 | sed 's^.tar.gz^^')/prometheus /usr/local/bin
-    sudo cp -r $(echo $CURRENT_PROMETHEUS | cut -d '/' -f 9 | sed 's^.tar.gz^^')/consoles /etc/prometheus
-    sudo cp -r $(echo $CURRENT_PROMETHEUS | cut -d '/' -f 9 | sed 's^.tar.gz^^')/console_libraries /etc/prometheus
+    sudo cp -r $PROM_DIR/consoles /etc/prometheus
+    sudo cp -r $PROM_DIR/console_libraries /etc/prometheus
 
     sudo tee /etc/prometheus/prometheus-subspace.yml &>/dev/null << E-O-F
-scrape_interval: $YOUR_GRAFANA_SCRAPE_INTERVAL
-external_labels:
-    origin_prometheus: $NODENAME
+global:
+    scrape_interval: $YOUR_GRAFANA_SCRAPE_INTERVAL
+    external_labels:
+        origin_prometheus: $NODENAME
 scrape_configs:
-  - job_name: "node-exporter"
-    static_configs:
-      - targets: ["localhost:9100"]
-  - job_name: "prometheus"
-    static_configs:
-      - targets: ["localhost:9090"]
-  - job_name: "subspace"
-    static_configs:
-      - targets: ["localhost:9615"]
+    - job_name: "node-exporter"
+      static_configs:
+        - targets: ["localhost:9100"]
+    - job_name: "prometheus"
+      static_configs:
+        - targets: ["localhost:9090"]
+    - job_name: "subspace"
+      static_configs:
+        - targets: ["localhost:9615"]
 remote_write:
-- url: $YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT
-    basic_auth:
-    username: $YOUR_GRAFANA_METRICS_INSTANCE_ID
-    password: $YOUR_GRAFANA_API_KEY
+    - url: $YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT
+      basic_auth:
+        username: $YOUR_GRAFANA_METRICS_INSTANCE_ID
+        password: $YOUR_GRAFANA_API_KEY
 E-O-F
 
     sudo tee /etc/systemd/user/prometheus.service &>/dev/null << E-O-F
@@ -185,7 +187,6 @@ After=network-online.target
 
 [Service]
 Type=simple
-User=$USER
 Restart=always
 RestartSec=15
 ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus-subspace.yml
@@ -194,14 +195,13 @@ ExecStart=/usr/local/bin/prometheus --config.file=/etc/prometheus/prometheus-sub
 WantedBy=default.target
 E-O-F
 
-    sudo tee /etc/systemd/user/node_exporter.service &>/dev/null << E-O-F
+    sudo tee /etc/systemd/user/prom-node_exporter.service &>/dev/null << E-O-F
 [Unit]
 Description=prom-node-exporter
 After=network-online.target
 
 [Service]
 Type=simple
-User=$USER
 Restart=always
 RestartSec=15
 ExecStart=/usr/local/bin/node_exporter
@@ -209,11 +209,11 @@ ExecStart=/usr/local/bin/node_exporter
 [Install]
 WantedBy=default.target
 E-O-F
-
-    sudo systemctl --user start prometheus
-    sudo systemctl --user start prom-node-exporter
-    sudo systemctl --user enable prometheus
-    sudo systemctl --user enable prom-node-exporter
+    systemctl --user daemon-reload
+    systemctl --user start prom-node_exporter
+    systemctl --user start prometheus
+    systemctl --user enable prom-node_exporter
+    systemctl --user enable prometheus
 fi
 
 #INSTALL SUBSPACE
@@ -259,8 +259,8 @@ else
     sudo wget -N $LATEST_FARMER -P /opt/subspace/
     sudo chmod +x /opt/subspace/"${LATEST_NODE##*/}"
     sudo chmod +x /opt/subspace/"${LATEST_FARMER##*/}"
-    sudo ln -s -f /opt/subspace/"${LATEST_NODE##*/}" /usr/bin/subspace-node
-    sudo ln -s -f /opt/subspace/"${LATEST_FARMER##*/}" /usr/bin/subspace-farmer
+    sudo ln -s -f /opt/subspace/"${LATEST_NODE##*/}" /usr/local/bin/subspace-node
+    sudo ln -s -f /opt/subspace/"${LATEST_FARMER##*/}" /usr/local/bin/subspace-farmer
 
 fi
 
@@ -270,7 +270,6 @@ Description=Subspace Node
 After=network.target
 [Service]
 Type=simple
-User=$USER
 Restart=always
 RestartSec=15
 ExecStart=/usr/local/bin/subspace-node \\
@@ -290,7 +289,6 @@ Description=Subspace Farmer
 After=network.target
 [Service]
 Type=simple
-User=$USER
 Restart=always
 RestartSec=15
 ExecStart=/usr/local/bin/subspace-farmer farm \\
@@ -300,9 +298,9 @@ ExecStart=/usr/local/bin/subspace-farmer farm \\
 WantedBy=default.target
 E-O-F
 
-sudo systemctl --user daemon-reload
-sudo systemctl --user start subspace-node
-sudo systemctl --user start subspace-farmer
-sudo systemctl --user enable subspace-node
-sudo systemctl --user enable subspace-farmer
+systemctl --user daemon-reload
+systemctl --user start subspace-node
+systemctl --user start subspace-farmer
+systemctl --user enable subspace-node
+systemctl --user enable subspace-farmer
 sudo loginctl enable-linger $USER
