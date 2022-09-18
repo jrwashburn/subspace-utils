@@ -111,7 +111,7 @@ if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
     echo
     echo
     read -r -p "Enter the remote_write endpoint or enter to use default [$YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT]?" YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT
-    YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT=${YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT:-"https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom"}
+    YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT=${YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT:-"https://prometheus-prod-10-prod-us-central-0.grafana.net/api/prom/push"}
     echo
     echo
     read -r -p "Enter your Grafana Metrics Instance Id: " YOUR_GRAFANA_METRICS_INSTANCE_ID
