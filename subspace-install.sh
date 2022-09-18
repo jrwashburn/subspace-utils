@@ -243,9 +243,24 @@ echo
 read -r -p "Enter the plot size (i.e. 10G, 100G, 1T): " PLOT_SIZE
 echo
 echo
-read -r -p "Enter the chain name (i.e. gemini-1, gemini-2, etc._: " CHAIN_NAME
+read -r -p "Enter the chain name (i.e. gemini-2a, etc.): " CHAIN_NAME
 echo
 echo
+NODE_BASE_PATH="DEFAULT"
+FARMER_BASE_PATH="DEFAULT"
+read -n1 -r -p "Do you want a custom file path for the node? " YESNO
+if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
+    read -r -p "Enter the base path for NODE files to be stored (i.e. /path/to/directory/here : " NODE_BASE_PATH
+    if ! [[ -d "$NODE_BASE_PATH" ]] ; then
+        echo "direcotry does not exist"
+        exit
+    fi
+    read -r -p "Enter the base path for FARMER files to be stored (i.e. /path/to/directory/here : " FARMER_BASE_PATH
+    if ! [[ -d "$FARMER_BASE_PATH" ]] ; then
+        echo "direcotry does not exist"
+        exit
+    fi
+fi
 
 LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/subspace/subspace/tags | grep name | grep \"gemini- | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
 LATEST_NODE=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM | grep -v opencl | grep node | cut -d : -f2,3 |  tr -d ' "')
@@ -274,6 +289,9 @@ Restart=always
 RestartSec=15
 ExecStart=/usr/local/bin/subspace-node \\
 --chain=$CHAIN_NAME \\
+if ! [[ "${NODE_BASE_PATH} = DEFAULT" ]]; then
+    --base-path=$NODE_BASE_PATH \\
+fi
 --execution="wasm" \\
 --pruning=1024 \\
 --keep-blocks=1024 \\
@@ -292,7 +310,11 @@ After=network.target
 Type=simple
 Restart=always
 RestartSec=15
-ExecStart=/usr/local/bin/subspace-farmer farm \\
+ExecStart=/usr/local/bin/subspace-farmer \\
+if ! [[ "${FARMER_BASE_PATH} = DEFAULT" ]]; then
+    --base-path=$FARMER_BASE_PATH \\
+fi
+farm \\
 --reward-address=$REWARD_ADDRESS \\
 --plot-size=$PLOT_SIZE
 [Install]
