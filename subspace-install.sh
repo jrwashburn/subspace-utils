@@ -278,7 +278,7 @@ ExecStart=/usr/local/bin/subspace-node \\
 --pruning=1024 \\
 --keep-blocks=1024 \\
 --validator \\
---port=$SUBSPACEPORT
+--port=$SUBSPACEPORT \\
 --name=$NODENAME
 [Install]
 WantedBy=default.target
