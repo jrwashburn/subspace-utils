@@ -237,6 +237,14 @@ echo
 echo Installing Subspace Node and Farmer
 echo
 echo
+SERVICE_SUFFIX=""
+read -n1 -r -p "Is this a nth instance and needs a differen service name? (y/n) " YESNO
+echo
+if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
+    read -r -p "Enter the service name extension (e.g. 1, or n2, or v3, etc. This will be appended to the systemd service name ) : " SERVICE_SUFFIX
+fi
+echo
+echo
 read -r -p "Enter the subspace reward wallet address for farming rewards: " REWARD_ADDRESS
 echo
 echo
@@ -279,9 +287,9 @@ else
 
 fi
 
-sudo tee /etc/systemd/user/subspace-node.service &>/dev/null << E-O-F
+sudo tee /etc/systemd/user/subspace-node.service$SERVICE_SUFFIX &>/dev/null << E-O-F
 [Unit]
-Description=Subspace Node
+Description=Subspace Node $SERVICE_SUFFIX
 After=network.target
 [Service]
 Type=simple
@@ -302,9 +310,9 @@ fi
 WantedBy=default.target
 E-O-F
 
-sudo tee /etc/systemd/user/subspace-farmer.service &>/dev/null << E-O-F
+sudo tee /etc/systemd/user/subspace-farmer.service$SERVICE_SUFFIX &>/dev/null << E-O-F
 [Unit]
-Description=Subspace Farmer
+Description=Subspace Farmer $SERVICE_SUFFIX
 After=network.target
 [Service]
 Type=simple
