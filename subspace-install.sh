@@ -64,6 +64,31 @@ E-O-F
 
 read -r -p "Enter the node name to identify this node: " NODENAME
 echo
+NODE_BASE_PATH="DEFAULT"
+FARMER_BASE_PATH="DEFAULT"
+read -n1 -r -p "Do you want a custom file path for the node? " YESNO
+echo
+if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
+    read -r -p "Enter the base path for NODE files to be stored (i.e. /path/to/directory/here : " NODE_BASE_PATH
+    echo
+    if ! [[ -d "$NODE_BASE_PATH" ]] ; then
+        echo directory does not exist - creating $NODE_BASE_PATH
+        read -n1 -r -p "Press any key to continue or CTRL+C to break." CONTINUE
+        sudo mkdir -p $NODE_BASE_PATH
+    fi
+    read -r -p "Enter the base path for FARMER files to be stored (i.e. /path/to/directory/here : " FARMER_BASE_PATH
+    echo
+    if ! [[ -d "$FARMER_BASE_PATH" ]] ; then
+        echo directory does not exist - creating $NODE_BASE_PATH
+        read -n1 -r -p "Press any key to continue or CTRL+C to break." CONTINUE
+        sudo mkdir -p $FARMER_BASE_PATH
+    fi
+fi
+
+read -r -p "Enter the service name extension if any (e.g. 1, or n2, or v3, etc. This will be appended to the systemd service name. Just press enter for none.) : " SERVICE_SUFFIX
+echo
+echo
+
 SUBSPACEPORT=30333
 echo By default, Subspace node will listen on port $SUBSPACEPORT.
 echo
@@ -77,6 +102,21 @@ if [[ "${YESNO}" = "p" || ${YESNO} = "P" ]] ; then
         exit
     fi
 fi
+
+SUBSPACE_PROMETHEUS=9615
+echo By default, Subspace node will provide prometheus metrics on port $SUBSPACE_PROMETHEUS.
+echo
+read -n1 -r -p "Press any key to use the default port, or press P to enter a custom port number? (P/any) " YESNO
+if [[ "${YESNO}" = "p" || ${YESNO} = "P" ]] ; then
+    echo
+    read -p "Enter a port number between 1025-65534? " SUBSPACE_PROMETHEUS
+    echo
+    if [[ "${SUBSPACE_PROMETHEUS}" < 1025 || ${SUBSPACE_PROMETHEUS} > 65534 ]] ; then
+        echo "Invalid port number provided; ending script."
+        exit
+    fi
+fi
+
 
 #UFW setup
 #get current SSH port configuration
@@ -172,7 +212,7 @@ scrape_configs:
         - targets: ["localhost:9090"]
     - job_name: "subspace"
       static_configs:
-        - targets: ["localhost:9615"]
+        - targets: ["localhost:$SUBSPACE_PROMETHEUS"]
 remote_write:
     - url: $YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT
       basic_auth:
@@ -237,14 +277,6 @@ echo
 echo Installing Subspace Node and Farmer
 echo
 echo
-SERVICE_SUFFIX=""
-read -n1 -r -p "Is this a nth instance and needs a differen service name? (y/n) " YESNO
-echo
-if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
-    read -r -p "Enter the service name extension (e.g. 1, or n2, or v3, etc. This will be appended to the systemd service name ) : " SERVICE_SUFFIX
-fi
-echo
-echo
 read -r -p "Enter the subspace reward wallet address for farming rewards: " REWARD_ADDRESS
 echo
 echo
@@ -254,21 +286,6 @@ echo
 read -r -p "Enter the chain name (i.e. gemini-2a, etc.): " CHAIN_NAME
 echo
 echo
-NODE_BASE_PATH="DEFAULT"
-FARMER_BASE_PATH="DEFAULT"
-read -n1 -r -p "Do you want a custom file path for the node? " YESNO
-if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
-    read -r -p "Enter the base path for NODE files to be stored (i.e. /path/to/directory/here : " NODE_BASE_PATH
-    if ! [[ -d "$NODE_BASE_PATH" ]] ; then
-        echo "direcotry does not exist"
-        exit
-    fi
-    read -r -p "Enter the base path for FARMER files to be stored (i.e. /path/to/directory/here : " FARMER_BASE_PATH
-    if ! [[ -d "$FARMER_BASE_PATH" ]] ; then
-        echo "direcotry does not exist"
-        exit
-    fi
-fi
 
 LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/subspace/subspace/tags | grep name | grep \"gemini- | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
 LATEST_NODE=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM | grep -v opencl | grep node | cut -d : -f2,3 |  tr -d ' "')
@@ -305,6 +322,7 @@ fi
 --keep-blocks=1024 \\
 --validator \\
 --port=$SUBSPACEPORT \\
+--prometheus-port $SUBSPACE_PROMETHEUS \\
 --name=$NODENAME
 [Install]
 WantedBy=default.target
