@@ -14,6 +14,12 @@ If you change your minda and want to remove subpace, this will cleanup and delet
 ```bash
 wget -q https://raw.githubusercontent.com/jrwashburn/subspace-utils/main/subspace-uninstall.sh && bash subspace-uninstall.sh && rm subspace-uninstall.sh
 ```
+
+# Upgrading Subspace
+```bash
+wget -q https://raw.githubusercontent.com/jrwashburn/subspace-utils/main/subspace-upgrade.sh && bash subspace-upgrade.sh && rm subspace-upgrade.sh
+```
+
 # Setting up grafana cloud dashboard
 To use the grafana dashboard from https://github.com/counterpointsoftware, but in grafana cloud:
 

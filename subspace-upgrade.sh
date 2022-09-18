@@ -1,3 +1,5 @@
+#TODO add support for wipe / chain change
+
 #check platforms to determine which version to install
 case $(arch) in
     x86_64 )
