@@ -315,7 +315,7 @@ else
     FARMER_BASE_PATH="--base-path=$FARMER_BASE_PATH"
 fi
 
-sudo tee /etc/systemd/user/subspace-node$SERVICE_SUFFIX.service$ &>/dev/null << E-O-F
+sudo tee /etc/systemd/user/subspace-node$SERVICE_SUFFIX.service &>/dev/null << E-O-F
 [Unit]
 Description=Subspace Node $SERVICE_SUFFIX
 After=network.target
