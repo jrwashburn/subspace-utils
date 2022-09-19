@@ -97,7 +97,7 @@ if [ $YESNO = "P" ] ; then
     echo
     read -p "Enter a port number between 1025-65534? " SUBSPACEPORT
     echo
-    if [ $SUBSPACEPORT < 1025 ] || [ $SUBSPACEPORT > 65534 ] ; then
+    if [ $SUBSPACEPORT -lt 1025 ] || [ $SUBSPACEPORT -gt 65534 ] ; then
         echo Invalid port number provided - ending script.
         exit
     fi
@@ -111,7 +111,7 @@ if [ $YESNO = "P" ] ; then
     echo
     read -p "Enter a port number between 1025-65534? " SUBSPACE_PROMETHEUS
     echo
-    if [[ ${SUBSPACE_PROMETHEUS} < 1025 || ${SUBSPACE_PROMETHEUS} > 65534 ]] ; then
+    if [ $SUBSPACE_PROMETHEUS -lt 1025 ] || [ $SUBSPACE_PROMETHEUS -gt 65534 ] ; then
         echo "Invalid port number provided; ending script."
         exit
     fi
