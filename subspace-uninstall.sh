@@ -52,3 +52,5 @@ if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
     sudo rm /etc/systemd/user/subspace-node.service
     sudo rm /etc/systemd/user/subspace-farmer.service
 fi
+echo
+echo "If you used custom directories, you may need to clear them directly."
