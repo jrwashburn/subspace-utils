@@ -87,10 +87,6 @@ if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
     FARMER_BASE_PATH="--base-path=$FARMER_BASE_PATH"
 fi
 
-read -r -p "Enter the service name extension if any (e.g. 1, or n2, or v3, etc. This will be appended to the systemd service name. Just press enter for none.) : " SERVICE_SUFFIX
-echo
-echo
-
 SUBSPACEPORT=30333
 echo By default, Subspace node will listen on port $SUBSPACEPORT.
 echo
@@ -305,9 +301,9 @@ else
     sudo ln -s -f /opt/subspace/"${LATEST_FARMER##*/}" /usr/local/bin/subspace-farmer
 fi
 
-sudo tee /etc/systemd/user/subspace-node$SERVICE_SUFFIX.service &>/dev/null << E-O-F
+sudo tee /etc/systemd/user/subspace-node.service &>/dev/null << E-O-F
 [Unit]
-Description=Subspace Node $SERVICE_SUFFIX
+Description=Subspace Node
 After=network.target
 [Service]
 Type=simple
@@ -327,9 +323,9 @@ $NODE_BASE_PATH \\
 WantedBy=default.target
 E-O-F
 
-sudo tee /etc/systemd/user/subspace-farmer$SERVICE_SUFFIX.service &>/dev/null << E-O-F
+sudo tee /etc/systemd/user/subspace-farmer.service &>/dev/null << E-O-F
 [Unit]
-Description=Subspace Farmer $SERVICE_SUFFIX
+Description=Subspace Farmer
 After=network.target
 [Service]
 Type=simple
@@ -345,8 +341,8 @@ WantedBy=default.target
 E-O-F
 
 systemctl --user daemon-reload
-systemctl --user start subspace-node$SERVICE_SUFFIX
-systemctl --user start subspace-farmer$SERVICE_SUFFIX
-systemctl --user enable subspace-node$SERVICE_SUFFIX
-systemctl --user enable subspace-farmer$SERVICE_SUFFIX
+systemctl --user start subspace-node
+systemctl --user start subspace-farmer
+systemctl --user enable subspace-node
+systemctl --user enable subspace-farmer
 sudo loginctl enable-linger $USER
