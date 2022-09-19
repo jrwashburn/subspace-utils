@@ -10,7 +10,7 @@ E-O-F
 
 read -n1 -r -p "Would you like to create a new user? (y/n) " YESNO
 echo
-if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
+if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
     echo Setting up new dedicated user to run subspace.
     read -p "New username: " USERNAME
     echo
@@ -34,7 +34,7 @@ if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
     echo Please logout and log back in as the new user and run the script again.
     exit
 else
-    if [[ $EUID = 0 ]]; then
+    if [ $EUID = 0 ]; then
         cat <<E-O-F
 
 It is not recommended to run subspace as the root user.
@@ -68,7 +68,7 @@ NODE_BASE_PATH="DEFAULT"
 FARMER_BASE_PATH="DEFAULT"
 read -n1 -r -p "Do you want a custom file path for the node? " YESNO
 echo
-if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
+if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
     read -r -p "Enter the base path for NODE files to be stored (i.e. /path/to/directory/here : " NODE_BASE_PATH
     echo
     if ! [[ -d "$NODE_BASE_PATH" ]] ; then
@@ -92,13 +92,13 @@ echo
 SUBSPACEPORT=30333
 echo By default, Subspace node will listen on port $SUBSPACEPORT.
 echo
-read -n1 -r -p "Press any key to use the default port, or press P to enter a custom port number? (P/any) " YESNO
-if [[ "${YESNO}" = "p" || ${YESNO} = "P" ]] ; then
+read -n1 -r -p "Press any key to use the default port, or press P (must use capital P) to enter a custom port number? (P/any) " YESNO
+if [ $YESNO = "P" ] ; then
     echo
     read -p "Enter a port number between 1025-65534? " SUBSPACEPORT
     echo
-    if [[ "${SUBSPACEPORT}" < 1025 || ${SUBSPACEPORT} > 65534 ]] ; then
-        echo "Invalid port number provided; ending script."
+    if [ $SUBSPACEPORT < 1025 ] || [ $SUBSPACEPORT > 65534 ] ; then
+        echo Invalid port number provided - ending script.
         exit
     fi
 fi
@@ -107,11 +107,11 @@ SUBSPACE_PROMETHEUS=9615
 echo By default, Subspace node will provide prometheus metrics on port $SUBSPACE_PROMETHEUS.
 echo
 read -n1 -r -p "Press any key to use the default port, or press P to enter a custom port number? (P/any) " YESNO
-if [[ "${YESNO}" = "p" || ${YESNO} = "P" ]] ; then
+if [ $YESNO = "P" ] ; then
     echo
     read -p "Enter a port number between 1025-65534? " SUBSPACE_PROMETHEUS
     echo
-    if [[ "${SUBSPACE_PROMETHEUS}" < 1025 || ${SUBSPACE_PROMETHEUS} > 65534 ]] ; then
+    if [[ ${SUBSPACE_PROMETHEUS} < 1025 || ${SUBSPACE_PROMETHEUS} > 65534 ]] ; then
         echo "Invalid port number provided; ending script."
         exit
     fi
@@ -125,7 +125,7 @@ echo
 echo
 read -n1 -r -p "Do you want to setup UFW firewall to only allow subspace and ssh ($SSHPORT) ports inbound, and allow all outbound traffic? " YESNO
 echo
-if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
+if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
     sudo apt -y install ufw
     sudo ufw default deny incoming
     sudo ufw default allow outgoing
@@ -147,7 +147,7 @@ for example: $YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT
 E-O-F
 
 read -n1 -r -p "Do you want to install Prometheus and configure it to push metrics to a remote_write endpoint such as Grafana Cloud? (y/n)" YESNO
-if [[ "${YESNO}" = "y" || ${YESNO} = "Y" ]] ; then
+if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
     echo
     echo
     read -r -p "Enter the remote_write endpoint or enter to use default [$YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT]?" YOUR_GRAFANA_REMOTE_WRITE_ENDPOINT
@@ -290,7 +290,7 @@ echo
 LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/subspace/subspace/tags | grep name | grep \"gemini- | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
 LATEST_NODE=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM | grep -v opencl | grep node | cut -d : -f2,3 |  tr -d ' "')
 LATEST_FARMER=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM | grep -v opencl | grep farmer | cut -d : -f2,3 |  tr -d ' "')
-if [[ "${LATEST_NODE}" = "" || ${LATEST_FARMER} = "" ]] ; then
+if [ $LATEST_NODE = "" ] || [ $LATEST_FARMER = "" ] ; then
     echo Cannot find latest Subspace builds; perhaps due to year rollover and no builds yet this year?
     exit
 else
@@ -301,7 +301,6 @@ else
     sudo chmod +x /opt/subspace/"${LATEST_FARMER##*/}"
     sudo ln -s -f /opt/subspace/"${LATEST_NODE##*/}" /usr/local/bin/subspace-node
     sudo ln -s -f /opt/subspace/"${LATEST_FARMER##*/}" /usr/local/bin/subspace-farmer
-
 fi
 
 sudo tee /etc/systemd/user/subspace-node.service$SERVICE_SUFFIX &>/dev/null << E-O-F
