@@ -64,8 +64,8 @@ E-O-F
 
 read -r -p "Enter the node name to identify this node: " NODENAME
 echo
-NODE_BASE_PATH="DEFAULT"
-FARMER_BASE_PATH="DEFAULT"
+NODE_BASE_PATH=""
+FARMER_BASE_PATH=""
 read -n1 -r -p "Do you want a custom file path for the node? " YESNO
 echo
 if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
@@ -76,13 +76,15 @@ if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
         read -n1 -r -p "Press any key to continue or CTRL+C to break." CONTINUE
         sudo mkdir -p $NODE_BASE_PATH
     fi
+    NODE_BASE_PATH="--base-path=$NODE_BASE_PATH"
     read -r -p "Enter the base path for FARMER files to be stored (i.e. /path/to/directory/here : " FARMER_BASE_PATH
     echo
     if ! [[ -d "$FARMER_BASE_PATH" ]] ; then
-        echo directory does not exist - creating $NODE_BASE_PATH
+        echo directory does not exist - creating $FARMER_BASE_PATH
         read -n1 -r -p "Press any key to continue or CTRL+C to break." CONTINUE
         sudo mkdir -p $FARMER_BASE_PATH
     fi
+    FARMER_BASE_PATH="--base-path=$FARMER_BASE_PATH"
 fi
 
 read -r -p "Enter the service name extension if any (e.g. 1, or n2, or v3, etc. This will be appended to the systemd service name. Just press enter for none.) : " SERVICE_SUFFIX
@@ -301,18 +303,6 @@ else
     sudo chmod +x /opt/subspace/"${LATEST_FARMER##*/}"
     sudo ln -s -f /opt/subspace/"${LATEST_NODE##*/}" /usr/local/bin/subspace-node
     sudo ln -s -f /opt/subspace/"${LATEST_FARMER##*/}" /usr/local/bin/subspace-farmer
-fi
-
-if [ $NODE_BASE_PATH = "DEFAULT" ] ; then
-    NODE_BASE_PATH=""
-else
-    NODE_BASE_PATH="--base-path=$NODE_BASE_PATH"
-fi
-
-if [ $FARMER_BASE_PATH = "DEFAULT" ]; then
-    FARMER_BASE_PATH=""
-else
-    FARMER_BASE_PATH="--base-path=$FARMER_BASE_PATH"
 fi
 
 sudo tee /etc/systemd/user/subspace-node$SERVICE_SUFFIX.service &>/dev/null << E-O-F
