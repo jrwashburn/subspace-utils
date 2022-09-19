@@ -303,7 +303,19 @@ else
     sudo ln -s -f /opt/subspace/"${LATEST_FARMER##*/}" /usr/local/bin/subspace-farmer
 fi
 
-sudo tee /etc/systemd/user/subspace-node.service$SERVICE_SUFFIX &>/dev/null << E-O-F
+if [ $NODE_BASE_PATH = "DEFAULT" ] ; then
+    NODE_BASE_PATH=""
+else
+    NODE_BASE_PATH="--base-path=$NODE_BASE_PATH"
+fi
+
+if [ $FARMER_BASE_PATH = "DEFAULT" ]; then
+    FARMER_BASE_PATH=""
+else
+    FARMER_BASE_PATH="--base-path=$FARMER_BASE_PATH"
+fi
+
+sudo tee /etc/systemd/user/subspace-node$SERVICE_SUFFIX.service$ &>/dev/null << E-O-F
 [Unit]
 Description=Subspace Node $SERVICE_SUFFIX
 After=network.target
@@ -313,9 +325,7 @@ Restart=always
 RestartSec=15
 ExecStart=/usr/local/bin/subspace-node \\
 --chain=$CHAIN_NAME \\
-if ! [[ "${NODE_BASE_PATH} = DEFAULT" ]]; then
-    --base-path=$NODE_BASE_PATH \\
-fi
+$NODE_BASE_PATH \\
 --execution="wasm" \\
 --pruning=1024 \\
 --keep-blocks=1024 \\
@@ -327,7 +337,7 @@ fi
 WantedBy=default.target
 E-O-F
 
-sudo tee /etc/systemd/user/subspace-farmer.service$SERVICE_SUFFIX &>/dev/null << E-O-F
+sudo tee /etc/systemd/user/subspace-farmer$SERVICE_SUFFIX.service &>/dev/null << E-O-F
 [Unit]
 Description=Subspace Farmer $SERVICE_SUFFIX
 After=network.target
@@ -336,9 +346,7 @@ Type=simple
 Restart=always
 RestartSec=15
 ExecStart=/usr/local/bin/subspace-farmer \\
-if ! [[ "${FARMER_BASE_PATH} = DEFAULT" ]]; then
-    --base-path=$FARMER_BASE_PATH \\
-fi
+$FARMER_BASE_PATH \\
 farm \\
 --reward-address=$REWARD_ADDRESS \\
 --plot-size=$PLOT_SIZE
@@ -347,8 +355,8 @@ WantedBy=default.target
 E-O-F
 
 systemctl --user daemon-reload
-systemctl --user start subspace-node
-systemctl --user start subspace-farmer
-systemctl --user enable subspace-node
-systemctl --user enable subspace-farmer
+systemctl --user start subspace-node$SERVICE_SUFFIX
+systemctl --user start subspace-farmer$SERVICE_SUFFIX
+systemctl --user enable subspace-node$SERVICE_SUFFIX
+systemctl --user enable subspace-farmer$SERVICE_SUFFIX
 sudo loginctl enable-linger $USER
