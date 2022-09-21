@@ -9,7 +9,7 @@ Utilities to manage and operate subspace network nodes
 ```
 
 # Removing Subspace
-If you change your minda and want to remove subpace, this will cleanup and delete the files installed.
+If you change your mind and want to remove subpace, this will cleanup and delete the files installed.
 
 ```bash
 wget -q https://raw.githubusercontent.com/jrwashburn/subspace-utils/main/subspace-uninstall.sh && bash subspace-uninstall.sh && rm subspace-uninstall.sh
