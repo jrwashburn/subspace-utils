@@ -2,8 +2,9 @@
 cat <<E-O-F
 Installing Linux Subspace Node
 
-A new user may be created and added to sudo group and systemd-journal groups.
-The user will be granted the same ssh authorized_keys as the current user $USER
+A new user may be created to run subspace. Note the following:
+** The user will be added to sudo group and systemd-journal groups. **
+** The user will be granted the same ssh authorized_keys as the current user $USER **
 If a new user has already been created, please run this script under that user, and press CTRL+C now to end this script.
 
 E-O-F
@@ -12,16 +13,14 @@ read -n1 -r -p "Would you like to create a new user? (y/n) " YESNO
 echo
 if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
     echo Setting up new dedicated user to run subspace.
+    echo You will be prompted to set a new password and other general user info.
     read -p "New username: " USERNAME
     echo
-    sudo /usr/sbin/useradd $USERNAME
-    if [ $? -eq 0 ]; then
-        echo User has been added, you will be prompted to set a new password.
-    else
+    sudo adduser $USERNAME
+    if ! [ $? -eq 0 ]; then
         echo Failed adding user $USERNAME
         exit
     fi
-    sudo passwd $USERNAME
     sudo usermod -aG sudo $USERNAME
     sudo usermod -aG systemd-journal $USERNAME
     sudo mkdir -p /home/$USERNAME/.ssh
