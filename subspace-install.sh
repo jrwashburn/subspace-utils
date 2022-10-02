@@ -74,6 +74,7 @@ if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
         echo directory does not exist - creating $NODE_BASE_PATH
         read -n1 -r -p "Press any key to continue or CTRL+C to break." CONTINUE
         sudo mkdir -p $NODE_BASE_PATH
+        sudo chmod 777 $NODE_BASE_PATH
     fi
     NODE_BASE_PATH="--base-path=$NODE_BASE_PATH"
     read -r -p "Enter the base path for FARMER files to be stored (i.e. /path/to/directory/here : " FARMER_BASE_PATH
@@ -82,6 +83,7 @@ if [ $YESNO = "y" ] || [ $YESNO = "Y" ] ; then
         echo directory does not exist - creating $FARMER_BASE_PATH
         read -n1 -r -p "Press any key to continue or CTRL+C to break." CONTINUE
         sudo mkdir -p $FARMER_BASE_PATH
+        sudo chmod 777 $FARMER_BASE_PATH
     fi
     FARMER_BASE_PATH="--base-path=$FARMER_BASE_PATH"
 fi
@@ -300,7 +302,7 @@ else
     sudo ln -s -f /opt/subspace/"${LATEST_FARMER##*/}" /usr/local/bin/subspace-farmer
 fi
 
-sudo tee /etc/systemd/user/subspace-node.service &>/dev/null << E-O-F
+sudo tee /etc/systemd/user/subspace-node-$NODENAME.service &>/dev/null << E-O-F
 [Unit]
 Description=Subspace Node
 After=network.target
@@ -316,13 +318,13 @@ $NODE_BASE_PATH \\
 --keep-blocks=1024 \\
 --validator \\
 --port=$SUBSPACEPORT \\
---prometheus-port $SUBSPACE_PROMETHEUS \\
+--prometheus-port=$SUBSPACE_PROMETHEUS \\
 --name=$NODENAME
 [Install]
 WantedBy=default.target
 E-O-F
 
-sudo tee /etc/systemd/user/subspace-farmer.service &>/dev/null << E-O-F
+sudo tee /etc/systemd/user/subspace-farmer-$NODENAME.service &>/dev/null << E-O-F
 [Unit]
 Description=Subspace Farmer
 After=network.target
@@ -340,8 +342,8 @@ WantedBy=default.target
 E-O-F
 
 systemctl --user daemon-reload
-systemctl --user start subspace-node
-systemctl --user start subspace-farmer
-systemctl --user enable subspace-node
-systemctl --user enable subspace-farmer
+systemctl --user start subspace-node-$NODENAME
+systemctl --user start subspace-farmer-$NODENAME
+systemctl --user enable subspace-node-$NODENAME
+systemctl --user enable subspace-farmer-$NODENAME
 sudo loginctl enable-linger $USER
