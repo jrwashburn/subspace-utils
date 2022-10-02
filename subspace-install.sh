@@ -102,6 +102,20 @@ if [ $YESNO = "P" ] ; then
     fi
 fi
 
+SUBSPACE_WS=40333
+echo By default, Subspace node will communicate with the farmer on port $SUBSPACE_WS.
+echo
+read -n1 -r -p "Press any key to use the default port, or press P to enter a custom port number? (P/any) " YESNO
+if [ $YESNO = "P" ] ; then
+    echo
+    read -p "Enter a port number between 1025-65534? " SUBSPACE_WS
+    echo
+    if [ $SUBSPACE_WS -lt 1025 ] || [ $SUBSPACE_WS -gt 65534 ] ; then
+        echo "Invalid port number provided; ending script."
+        exit
+    fi
+fi
+
 SUBSPACE_PROMETHEUS=9615
 echo By default, Subspace node will provide prometheus metrics on port $SUBSPACE_PROMETHEUS.
 echo
@@ -115,7 +129,6 @@ if [ $YESNO = "P" ] ; then
         exit
     fi
 fi
-
 
 #UFW setup
 #get current SSH port configuration
@@ -319,7 +332,9 @@ $NODE_BASE_PATH \\
 --validator \\
 --port=$SUBSPACEPORT \\
 --prometheus-port=$SUBSPACE_PROMETHEUS \\
+--ws-port=$SUBSPACE_WS \\
 --name=$NODENAME
+
 [Install]
 WantedBy=default.target
 E-O-F
@@ -336,7 +351,9 @@ ExecStart=/usr/local/bin/subspace-farmer \\
 $FARMER_BASE_PATH \\
 farm \\
 --reward-address=$REWARD_ADDRESS \\
---plot-size=$PLOT_SIZE
+--plot-size=$PLOT_SIZE \\
+--node-rpc-url=ws://127.0.0.1:$SUBSPACE_WS
+
 [Install]
 WantedBy=default.target
 E-O-F
