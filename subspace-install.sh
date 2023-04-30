@@ -339,8 +339,10 @@ ExecStart=/usr/local/bin/subspace-node \\
 --chain=$CHAIN_NAME \\
 $NODE_BASE_PATH \\
 --execution="wasm" \\
---pruning=1024 \\
---keep-blocks=1024 \\
+--blocks-pruning archive \\
+--state-pruning archive \\
+--dsn-disable-private-ips \
+--no-private-ipv4 \
 --validator \\
 --port=$SUBSPACEPORT \\
 --prometheus-port $SUBSPACE_PROMETHEUS \\
@@ -360,6 +362,7 @@ RestartSec=15
 ExecStart=/usr/local/bin/subspace-farmer \\
 $FARMER_BASE_PATH \\
 farm \\
+--disable-private-ips \
 --reward-address=$REWARD_ADDRESS \\
 --plot-size=$PLOT_SIZE
 [Install]
