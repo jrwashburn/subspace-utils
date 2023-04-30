@@ -294,7 +294,7 @@ determine_level () {
   CPULEVEL=3 # no subspace v4 builds currently, use v3 build for v4 cpu.
 }
 determine_level
-echo Detected $PLATFORM v$CPULEVEL
+echo Detected architecture $PLATFORM v$CPULEVEL
 
 echo
 echo
