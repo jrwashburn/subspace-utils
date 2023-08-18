@@ -38,7 +38,12 @@ determine_level () {
   CPULEVEL=3 # no subspace v4 builds currently, use v3 build for v4 cpu.
 }
 determine_level
-echo Detected architecture $PLATFORM v$CPULEVEL
+if [[ $CPULEVEL -le 2 ]] ; then
+  CPULEVEL=v$CPULEVEL
+else
+  CPULEVEL=skylake
+fi
+echo Detected architecture $PLATFORM $CPULEVEL
 
 echo
 echo
@@ -50,9 +55,9 @@ systemctl --user stop subspace-node
 
 echo Downloading latest build
 
-LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/subspace/subspace/tags | grep name | grep \"gemini- | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
-LATEST_NODE=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM-v$CPULEVEL |  grep node | cut -d : -f2,3 |  tr -d ' "')
-LATEST_FARMER=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM-v$CPULEVEL | grep farmer | cut -d : -f2,3 |  tr -d ' "')
+LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/subspace/subspace/releases | grep name | grep \"gemini- | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
+LATEST_NODE=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM-$CPULEVEL |  grep node | cut -d : -f2,3 |  tr -d ' "')
+LATEST_FARMER=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM-$CPULEVEL | grep farmer | cut -d : -f2,3 |  tr -d ' "')
 if [[ "${LATEST_NODE}" = "" || ${LATEST_FARMER} = "" ]] ; then
     echo Cannot find latest Subspace builds; perhaps due to year rollover and no builds yet this year?
     exit
