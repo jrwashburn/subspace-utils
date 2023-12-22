@@ -72,5 +72,8 @@ else
     sudo ln -s -f /opt/subspace/"${LATEST_FARMER##*/}" /usr/local/bin/subspace-farmer
 fi
 
+echo
+echo Starting Node and Farmer
+
 systemctl --user start subspace-node
 systemctl --user start subspace-farmer
