@@ -48,11 +48,6 @@ echo Detected architecture $PLATFORM $CPULEVEL
 echo
 echo
 echo Upgrading Subspace Node and Farmer
-echo
-echo Stopping Node and Farmer
-systemctl --user stop subspace-farmer
-systemctl --user stop subspace-node
-
 echo Downloading latest build
 
 LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/subspace/subspace/releases | grep name | grep \"gemini- | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
@@ -69,6 +64,10 @@ else
     sudo wget -N $LATEST_FARMER -P /opt/subspace/
     sudo chmod +x /opt/subspace/"${LATEST_NODE##*/}"
     sudo chmod +x /opt/subspace/"${LATEST_FARMER##*/}"
+    echo
+    echo Stopping Node and Farmer
+    systemctl --user stop subspace-farmer
+    systemctl --user stop subspace-node
     sudo ln -s -f /opt/subspace/"${LATEST_NODE##*/}" /usr/local/bin/subspace-node
     sudo ln -s -f /opt/subspace/"${LATEST_FARMER##*/}" /usr/local/bin/subspace-farmer
 fi
