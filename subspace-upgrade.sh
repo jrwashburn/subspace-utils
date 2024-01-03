@@ -50,7 +50,7 @@ echo
 echo Upgrading Subspace Node and Farmer
 echo Downloading latest build
 
-LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/subspace/subspace/releases | grep name | grep \"gemini- | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
+LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/subspace/subspace/releases | grep name | grep \"gemini- | grep $(date +%Y) | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
 echo Last build date: $LAST_BUILD_MONTH_DAY
 LATEST_NODE=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep gemini- | grep browser_download_url | grep $PLATFORM-$CPULEVEL | grep node | cut -d : -f2,3 |  tr -d ' "')
 echo Latest Node: $LATEST_NODE
