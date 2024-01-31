@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #ported from https://github.com/irbujam/ss_log_event_monitor/blob/main/parse_ss_farmer_log.ps1
 
 import os
