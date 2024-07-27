@@ -378,4 +378,4 @@ systemctl --user start subspace-node
 systemctl --user start subspace-farmer
 systemctl --user enable subspace-node
 systemctl --user enable subspace-farmer
-sudo loginctl enable-linger $USER 
+sudo loginctl enable-linger $USER

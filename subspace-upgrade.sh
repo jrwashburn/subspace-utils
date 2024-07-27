@@ -76,4 +76,4 @@ echo
 echo Starting Node and Farmer
 
 systemctl --user start subspace-node
-systemctl --user start subspace-farmer 
+systemctl --user start subspace-farmer
