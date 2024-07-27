@@ -316,9 +316,9 @@ read -r -p "Enter the chain name (i.e. gemini-2a, etc.): " CHAIN_NAME
 echo
 echo
 
-LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/subspace/subspace/releases | grep name | grep \"gemini- | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
-LATEST_NODE=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM-$CPULEVEL |  grep node | cut -d : -f2,3 |  tr -d ' "')
-LATEST_FARMER=$(curl https://api.github.com/repos/subspace/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM-$CPULEVEL | grep farmer | cut -d : -f2,3 |  tr -d ' "')
+LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep name | grep \"gemini- | cut -d : -f2 | cut -d - -f4,5 | cut -d \" -f1 | sort -M | tail -n1)
+LATEST_NODE=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM-$CPULEVEL |  grep node | cut -d : -f2,3 |  tr -d ' "')
+LATEST_FARMER=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep browser_download_url | grep $PLATFORM-$CPULEVEL | grep farmer | cut -d : -f2,3 |  tr -d ' "')
 
 if [ $LATEST_NODE = "" ] || [ $LATEST_FARMER = "" ] ; then
     echo Cannot find latest Subspace builds; perhaps due to year rollover and no builds yet this year?
