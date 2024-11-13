@@ -50,11 +50,11 @@ echo
 echo Upgrading Subspace Node and Farmer
 echo Downloading latest build
 
-LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep name | grep \"gemini- | grep $(date +%Y) | cut -d : -f2 | cut -d - -f4,5,6 | cut -d \" -f1 | sort -M | tail -n1)
+LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep name | grep \"mainnet- | grep $(date +%Y) | cut -d : -f2 | cut -d - -f4,5,6 | cut -d \" -f1 | sort -M | tail -n1)
 echo Last build date: $LAST_BUILD_MONTH_DAY
-LATEST_NODE=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep gemini- | grep browser_download_url | grep $PLATFORM-$CPULEVEL | grep node | cut -d : -f2,3 |  tr -d ' "')
+LATEST_NODE=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet- | grep browser_download_url | grep $PLATFORM-$CPULEVEL | grep node | cut -d : -f2,3 |  tr -d ' "')
 echo Latest Node: $LATEST_NODE
-LATEST_FARMER=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep gemini- | grep browser_download_url | grep $PLATFORM-$CPULEVEL  | grep farmer | cut -d : -f2,3 |  tr -d ' "')
+LATEST_FARMER=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet- | grep browser_download_url | grep $PLATFORM-$CPULEVEL  | grep farmer | cut -d : -f2,3 |  tr -d ' "')
 echo Latest Farmer: $LATEST_FARMER
 if [[ "${LATEST_NODE}" = "" || ${LATEST_FARMER} = "" ]] ; then
     echo Cannot find latest Subspace builds - perhaps due to year rollover and no builds yet this year?
