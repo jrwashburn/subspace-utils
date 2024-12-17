@@ -43,8 +43,18 @@ if [[ $CPULEVEL -le 2 ]] ; then
 else
   CPULEVEL=skylake
 fi
-AMD_BUILD=$(lspci | grep 'VGA' | grep 'AMG' && echo "rocm-" || echo "")
-echo Detected architecture $PLATFORM $CPULEVEL $AMD_BUILD
+if lspci | grep 'VGA' | grep 'AMG' ; then
+  AMD_BUILD=true
+else
+  AMD_BUILD=false
+fi
+if [[ $AMD_BUILD = true ]] ; then
+  FIND_PLATFORM="grep rocm-$PLATFORM-$CPULEVEL"
+else
+  FIND_PLATFORM="grep -v rocm | grep $PLATFORM-$CPULEVEL"
+fi
+
+echo Detected architecture $PLATFORM $CPULEVEL with AMD $AMD_BUILD
 
 echo
 echo
@@ -53,9 +63,9 @@ echo Downloading latest build
 
 LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep name | grep mainnet | grep $(date +%Y) | grep -v .exe | cut -d : -f2 | cut -d - -f8,9,10 | cut -d \" -f1 | sort -M | tail -n1)
 echo Last build date: $LAST_BUILD_MONTH_DAY
-LATEST_NODE=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet | grep browser_download_url | grep $AMD_BUILD$PLATFORM-$CPULEVEL | grep node | cut -d : -f2,3 |  tr -d ' "')
+LATEST_NODE=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet | grep browser_download_url | $FIND_PLATFORM | grep node | cut -d : -f2,3 |  tr -d ' "')
 echo Latest Node: $LATEST_NODE
-LATEST_FARMER=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet | grep browser_download_url | grep $AMD_BUILD$PLATFORM-$CPULEVEL  | grep farmer | cut -d : -f2,3 |  tr -d ' "')
+LATEST_FARMER=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet | grep browser_download_url | $FIND_PLATFORM | grep farmer | cut -d : -f2,3 |  tr -d ' "')
 echo Latest Farmer: $LATEST_FARMER
 if [[ "${LATEST_NODE}" = "" || ${LATEST_FARMER} = "" ]] ; then
     echo Cannot find latest Subspace builds - perhaps due to year rollover and no builds yet this year?
