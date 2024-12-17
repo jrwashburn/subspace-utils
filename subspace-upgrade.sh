@@ -43,7 +43,7 @@ if [[ $CPULEVEL -le 2 ]] ; then
 else
   CPULEVEL=skylake
 fi
-AMD_BUILD=#(lspci | grep 'VGA' | grep 'AMG' && echo "rocm" || echo "")
+AMD_BUILD=$(lspci | grep 'VGA' | grep 'AMG' && echo "rocm" || echo "")
 echo Detected architecture $PLATFORM $CPULEVEL $AMD_BUILD
 
 echo
