@@ -1,4 +1,11 @@
+#!/usr/bin/env bash
+
 #TODO add support for wipe / chain change
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "jq is required to parse GitHub release metadata. Please install jq (e.g. sudo apt install jq)."
+  exit 1
+fi
 
 #check platforms to determine which version to install
 case $(arch) in
@@ -43,7 +50,8 @@ if [[ $CPULEVEL -le 2 ]] ; then
 else
   CPULEVEL=skylake
 fi
-if lspci | grep 'VGA' | grep 'AMG' ; then
+
+if command -v lspci >/dev/null 2>&1 && lspci 2>/dev/null | grep -i 'VGA' | grep -qi 'AMD'; then
   AMD_BUILD=true
 else
   AMD_BUILD=false
@@ -56,25 +64,53 @@ echo
 echo Upgrading Subspace Node and Farmer
 echo Downloading latest build
 
-LAST_BUILD_MONTH_DAY=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep name | grep mainnet | grep $(date +%Y) | grep -v .exe | cut -d : -f2 | cut -d - -f8,9,10 | cut -d \" -f1 | sort -M | tail -n1)
-echo Last build date: $LAST_BUILD_MONTH_DAY
-if [[ $AMD_BUILD = true ]] ; then
-  LATEST_NODE=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet | grep browser_download_url | grep rocm-$PLATFORM-$CPULEVEL | grep node | cut -d : -f2,3 |  tr -d ' "')
-  echo Latest Node: $LATEST_NODE
-  LATEST_FARMER=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet | grep browser_download_url | grep rocm-$PLATFORM-$CPULEVEL| grep farmer | cut -d : -f2,3 |  tr -d ' "')
-  echo Latest Farmer: $LATEST_FARMER
-else
-  LATEST_NODE=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet | grep browser_download_url | grep -v rocm | grep $PLATFORM-$CPULEVEL | grep node | cut -d : -f2,3 |  tr -d ' "')
-  echo Latest Node: $LATEST_NODE
-  LATEST_FARMER=$(curl https://api.github.com/repos/autonomys/subspace/releases | grep $(date +%Y-$LAST_BUILD_MONTH_DAY) | grep mainnet | grep browser_download_url | grep -v rocm | grep $PLATFORM-$CPULEVEL| grep farmer | cut -d : -f2,3 |  tr -d ' "')
-  echo Latest Farmer: $LATEST_FARMER
-fi
+RELEASES_JSON=$(curl -fsSL https://api.github.com/repos/autonomys/subspace/releases) || {
+  echo "Failed to fetch release metadata from GitHub."
+  exit 1
+}
+
+latest_asset_url() {
+  local asset_type=$1
+  echo "$RELEASES_JSON" | jq -r \
+    --arg type "$asset_type" \
+    --arg platform "$PLATFORM" \
+    --arg level "$CPULEVEL" \
+    --arg want_rocm "$AMD_BUILD" '
+      [ .[]
+        | select((.draft | not) and (.prerelease | not) and (.name | test("mainnet")))
+        | .assets[]
+        | select(
+            (.browser_download_url | contains("subspace-" + $type))
+            and (.browser_download_url | contains($platform))
+            and (.browser_download_url | contains($level))
+            and (
+              ($want_rocm == "true" and (.browser_download_url | contains("rocm")))
+              or ($want_rocm != "true" and (.browser_download_url | contains("rocm") | not))
+            )
+          )
+        | {published: .updated_at, url: .browser_download_url}
+      ]
+      | sort_by(.published)
+      | reverse
+      | (.[0].url // "")
+    '
+}
+
+LATEST_NODE=$(latest_asset_url node)
+LATEST_FARMER=$(latest_asset_url farmer)
+
+LAST_BUILD_DATE=$(echo "$LATEST_NODE" | grep -oE 'mainnet-[0-9]{4}-[a-z]{3}-[0-9]{2}' | head -n1 | cut -d- -f2-4)
+echo "Last build date: ${LAST_BUILD_DATE:-unknown}"
+
+echo Latest Node: $LATEST_NODE
+echo Latest Farmer: $LATEST_FARMER
+
 if [[ "${LATEST_NODE}" = "" || ${LATEST_FARMER} = "" ]] ; then
     echo Cannot find latest Subspace builds - perhaps due to year rollover and no builds yet this year?
     exit
 else
-    sudo wget -N $LATEST_NODE -P /opt/subspace/
-    sudo wget -N $LATEST_FARMER -P /opt/subspace/
+    sudo wget -N "$LATEST_NODE" -P /opt/subspace/
+    sudo wget -N "$LATEST_FARMER" -P /opt/subspace/
     sudo chmod +x /opt/subspace/"${LATEST_NODE##*/}"
     sudo chmod +x /opt/subspace/"${LATEST_FARMER##*/}"
     echo
